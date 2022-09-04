@@ -2,21 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody))]
-public class CharacterController : MonoBehaviour
+public class CharacterController : Character
 {
     private Rigidbody _rigidbody;
 
     [SerializeField] private float movingForce = 20.0f;
     [SerializeField] private float jumpForce = 80f;
     [SerializeField] private float maxSlope = 30f;
-    [SerializeField] private float shootPower;
-    [SerializeField] private float rocketPower;
-    [SerializeField] private GameObject bulletPrefab;
-    [SerializeField] private GameObject rocketPrefab;
-    [SerializeField] private Transform gun;
-    [SerializeField] private Transform rocketGun;
+    [SerializeField] private float maxSpeed;
+    
     private float damping = 0.3f;
 
     private bool onGround = false;
@@ -41,27 +38,35 @@ public class CharacterController : MonoBehaviour
         onGround = CheckIsOnGround(collision);
     }
 
+    private void Destroyed()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     private void Update()
     {
         LookAtTarget();
         Shoot();
+        UpdateTimer();
     }
 
     private void Shoot()
     {
         if (Input.GetButtonDown("Fire1"))
         {
-            GameObject newBullet = Instantiate(bulletPrefab, gun.position, gun.rotation) as GameObject;
-            newBullet.GetComponent<Rigidbody>().AddForce(gun.forward * shootPower);
-            Destroy(newBullet, 5);
+            Vector3 shootDirection = transform.forward;
+            shootDirection = GetShootDirection(shootDirection, Gun.position);
+            ShootBullet(shootDirection);
         }
         if (Input.GetButtonDown("Fire2"))
         {
-            GameObject newRocket = Instantiate(rocketPrefab, rocketGun.position, rocketGun.rotation) as GameObject;
-            newRocket.AddComponent<ConstantForce>();
-            Destroy(newRocket, 5);
+            Vector3 shootDirection = transform.forward;
+            shootDirection = GetShootDirection(shootDirection, Gun.position);
+            ShootRocket(shootDirection);
         }
     }
+
+    
 
     private void FixedUpdate()
     {
@@ -71,6 +76,10 @@ public class CharacterController : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 _rigidbody.AddForce(Vector3.up * jumpForce);
+            }
+            else
+            {
+                _rigidbody.velocity = Vector3.ClampMagnitude(_rigidbody.velocity, maxSpeed);
             }
         }
     }
@@ -100,16 +109,34 @@ public class CharacterController : MonoBehaviour
 
     }
 
-    private void LookAtTarget()
+    private Vector3 GetShootDirection(Vector3 shootDirection, Vector3 gunPosition)
     {
         RaycastHit hit;
-
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
         if (Physics.Raycast(ray, out hit))
         {
-            Vector3 position = ray.GetPoint(hit.distance);
-            position.y = transform.position.y;
+            Vector3 targetVector = hit.point - gunPosition;
+
+            if (Vector3.Angle(shootDirection, targetVector) < 45)
+            {
+                shootDirection = targetVector;
+            }
+
+        }
+        return shootDirection;
+    }
+
+    private void LookAtTarget()
+    {
+        float distance;
+        Plane plane = new Plane(Vector3.up, transform.position);
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (plane.Raycast(ray, out distance))
+        {
+            Vector3 position = ray.GetPoint(distance);
             transform.LookAt(position);
         }
     }
