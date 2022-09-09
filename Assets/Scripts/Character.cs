@@ -5,6 +5,7 @@ using UnityEngine;
 public class Character : MonoBehaviour
 {
     [SerializeField] private float shootPower;
+    [SerializeField] private float rocketPower;
     [SerializeField] private float bulletDamage = 10;
     [SerializeField] private float rocketDamage = 20;
     [SerializeField] private float rocketDelay;
@@ -21,7 +22,7 @@ public class Character : MonoBehaviour
         {
             rocketDelayCurrent = rocketDelay;
             GameObject newRocket = Instantiate(rocketPrefab, Gun.position, Gun.rotation) as GameObject;
-            newRocket.GetComponent<Rigidbody>().AddForce(direction * shootPower);
+            newRocket.GetComponent<ConstantForce>().force = direction * rocketPower;
             Damager bulletBehaviour = newRocket.GetComponent<Damager>();
             bulletBehaviour.Damage = rocketDamage;
             bulletBehaviour.Owner = gameObject;

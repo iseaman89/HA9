@@ -366,7 +366,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2790e6e91c4d4428a7f34a7b7045a6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  shootPower: 100
+  shootPower: 150
+  rocketPower: 50
   bulletDamage: 10
   rocketDamage: 20
   rocketDelay: 0
